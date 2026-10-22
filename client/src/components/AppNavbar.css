@@ -1,0 +1,363 @@
+/* ==========================================================================
+   ANVAYA — AppNavbar.css
+   Persistent navigation bar across Dashboard, Profile, and Alumni Directory
+   ========================================================================== */
+
+.app-navbar {
+  background: #FFFFFF;
+  border-bottom: 1px solid #E2E8F0;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.app-navbar__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-navbar__left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.app-navbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #1D4ED8;
+  letter-spacing: -0.01em;
+}
+
+.app-navbar__brand-text span {
+  color: #F59E0B;
+}
+
+.app-navbar__nav-links {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  .app-navbar__nav-links {
+    display: flex;
+  }
+}
+
+.app-navbar__link {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748B;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.app-navbar__link:hover {
+  color: #1D4ED8;
+  background-color: #EFF6FF;
+}
+
+.app-navbar__link--active {
+  color: #1D4ED8;
+  background-color: #EFF6FF;
+  font-weight: 700;
+}
+
+.app-navbar__right {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.app-navbar__user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.app-navbar__user:hover {
+  background-color: #F8FAFC;
+}
+
+.app-navbar__avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1D4ED8 0%, #06B6D4 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.2);
+}
+
+.app-navbar__user-details {
+  display: none;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+@media (min-width: 640px) {
+  .app-navbar__user-details {
+    display: flex;
+  }
+}
+
+.app-navbar__user-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.app-navbar__user-role {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.1rem 0.45rem;
+  border-radius: 9999px;
+  margin-top: 0.15rem;
+  width: fit-content;
+}
+
+.app-navbar__user-role--student {
+  background-color: #E0E7FF;
+  color: #3730A3;
+}
+
+.app-navbar__user-role--alumni {
+  background-color: #FEF3C7;
+  color: #92400E;
+}
+
+.app-navbar__logout {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #EF4444;
+  background-color: #FEF2F2;
+  border: 1px solid #FEE2E2;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.app-navbar__logout:hover {
+  background-color: #FEE2E2;
+  color: #DC2626;
+}
+
+/* Mobile sub-navigation bar */
+.app-navbar__mobile-bar {
+  display: flex;
+  overflow-x: auto;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-top: 1px solid #F1F5F9;
+  background-color: #FAFAFA;
+}
+
+@media (min-width: 768px) {
+  .app-navbar__mobile-bar {
+    display: none;
+  }
+}
+
+.app-navbar__mobile-link {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #64748B;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.app-navbar__mobile-link--active {
+  color: #1D4ED8;
+  background-color: #EFF6FF;
+  font-weight: 700;
+}
+
+/* ──── Notification Bell & Popover ──── */
+.notif-wrapper {
+  position: relative;
+}
+
+.notif-bell-btn {
+  background: none;
+  border: none;
+  position: relative;
+  color: #64748B;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.notif-bell-btn:hover {
+  background-color: #F1F5F9;
+  color: #1D4ED8;
+}
+
+.notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background-color: #EF4444;
+  color: #FFFFFF;
+  font-size: 0.675rem;
+  font-weight: 800;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #FFFFFF;
+}
+
+.notif-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 340px;
+  max-width: 90vw;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
+  z-index: 100;
+  animation: fadeIn 0.15s ease-out;
+  overflow: hidden;
+}
+
+.notif-dropdown__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.15rem;
+  border-bottom: 1px solid #F1F5F9;
+  background-color: #F8FAFC;
+}
+
+.notif-dropdown__title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.notif-dropdown__mark-all {
+  background: none;
+  border: none;
+  color: #1D4ED8;
+  font-size: 0.775rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.notif-dropdown__mark-all:hover {
+  text-decoration: underline;
+}
+
+.notif-dropdown__list {
+  max-height: 350px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.notif-item {
+  padding: 0.85rem 1.15rem;
+  border-bottom: 1px solid #F1F5F9;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.notif-item:hover {
+  background-color: #F8FAFC;
+}
+
+.notif-item--unread {
+  background-color: #EFF6FF;
+}
+
+.notif-item--unread:hover {
+  background-color: #DBEAFE;
+}
+
+.notif-item__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notif-item__unread-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #1D4ED8;
+}
+
+.notif-item__msg {
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.notif-item__time {
+  font-size: 0.7rem;
+  color: #94A3B8;
+  margin-top: 0.15rem;
+}
+
+.notif-empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: #94A3B8;
+  font-size: 0.85rem;
+}
+

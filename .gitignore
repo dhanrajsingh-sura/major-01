@@ -1,0 +1,43 @@
+# ============================================
+# ANVAYA — .gitignore
+# ============================================
+
+# Dependencies
+**/node_modules/
+node_modules/
+
+# Environment variables (SECRETS — never commit to GitHub!)
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Build output
+dist/
+**/dist/
+client/dist/
+server/dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Coverage / Test
+coverage/
+
+# Temporary
+*.tmp
+*.temp
