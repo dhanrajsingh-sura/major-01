@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Search,
   Users,
@@ -32,6 +33,11 @@ import './AlumniDirectoryPage.css';
  * 4. Includes interactive mentorship request modal and safe demo seeder trigger.
  */
 const AlumniDirectoryPage = () => {
+  const location = useLocation();
+  // alumni user ID passed from the dashboard recommendation "Connect" button
+  const highlightUserId = location.state?.highlightAlumniUserId ?? null;
+  // ref so we can scroll the highlighted card into view
+  const highlightCardRef = useRef(null);
   const [alumni, setAlumni] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -99,6 +105,28 @@ const AlumniDirectoryPage = () => {
   useEffect(() => {
     fetchAlumni();
   }, [fetchAlumni]);
+
+  // When the alumni list is loaded AND we have a highlightUserId from the
+  // dashboard recommendation, auto-open the mentorship modal for that alumni
+  // and scroll their card into view.
+  useEffect(() => {
+    if (!highlightUserId || loading || alumni.length === 0) return;
+    const target = alumni.find(
+      (a) => String(a.user?._id) === String(highlightUserId) || String(a._id) === String(highlightUserId)
+    );
+    if (target) {
+      setSelectedAlumni(target);
+      setRequestMessage('');
+      setRequestSent(false);
+      // Scroll highlighted card into view after a short paint delay
+      setTimeout(() => {
+        if (highlightCardRef.current) {
+          highlightCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alumni, loading, highlightUserId]);
 
   // Reset all filters to default
   const handleResetFilters = () => {
@@ -315,9 +343,16 @@ const AlumniDirectoryPage = () => {
                 const initials = item.user?.name
                   ? item.user.name.charAt(0).toUpperCase()
                   : 'A';
+                const isHighlighted =
+                  highlightUserId &&
+                  (String(item.user?._id) === String(highlightUserId) || String(item._id) === String(highlightUserId));
 
                 return (
-                  <div key={item._id} className="alumni-card">
+                  <div
+                    key={item._id}
+                    className={`alumni-card${isHighlighted ? ' alumni-card--highlighted' : ''}`}
+                    ref={isHighlighted ? highlightCardRef : null}
+                  >
                     <div>
                       {/* Card Header: Avatar + Name + Company */}
                       <div className="alumni-card__header">

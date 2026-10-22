@@ -52,6 +52,7 @@ const DashboardPage = () => {
 
   // Phase 5: Recommendation state (students only)
   const [recommendations, setRecommendations] = useState([]);
+  const [discoveryAlumni, setDiscoveryAlumni] = useState([]);
   const [recLoading, setRecLoading] = useState(false);
   const [recProfileComplete, setRecProfileComplete] = useState(true);
 
@@ -99,7 +100,8 @@ const DashboardPage = () => {
       setRecLoading(true);
       const res = await api.get('/recommendations/alumni?limit=6');
       if (res.data.success) {
-        setRecommendations(res.data.data);
+        setRecommendations(res.data.data || []);
+        setDiscoveryAlumni(res.data.discoveryData || []);
         setRecProfileComplete(res.data.studentProfileComplete !== false);
       }
     } catch (err) {
@@ -459,86 +461,229 @@ const DashboardPage = () => {
                 <p style={{ color: '#64748B', fontSize: '0.9rem' }}>Finding your best mentor matches...</p>
               </div>
             ) : recommendations.length === 0 ? (
-              <div className="dashboard-empty">
-                <div className="dashboard-empty__icon"><Users size={22} /></div>
-                <h3 className="dashboard-empty__title">No Recommendations Yet</h3>
-                <p style={{ fontSize: '0.9rem', maxWidth: '440px' }}>
-                  Add your skills, interests, and career goals to your profile so ANVAYA can
-                  suggest the best mentors for you.
-                </p>
-                <Link to="/profile" className="btn btn-primary" style={{ marginTop: '0.25rem' }}>
-                  Complete My Profile
-                </Link>
-              </div>
-            ) : (
-              <div className="rec-grid">
-                {recommendations.map((rec) => {
-                  const initial = rec.user?.name ? rec.user.name.charAt(0).toUpperCase() : '?';
-                  const scoreClass =
-                    rec.score >= 60 ? 'rec-score-fill--high'
-                    : rec.score >= 30 ? 'rec-score-fill--medium'
-                    : 'rec-score-fill--low';
+              <>
+                <div className="dashboard-empty">
+                  <div className="dashboard-empty__icon"><Users size={22} /></div>
+                  <h3 className="dashboard-empty__title">No Direct Matches Yet</h3>
+                  <p style={{ fontSize: '0.9rem', maxWidth: '440px' }}>
+                    {!recProfileComplete
+                      ? 'Add your skills, interests, and career goals to your profile so ANVAYA can suggest the best mentors for you.'
+                      : 'No direct keyword matches found for your current profile. Explore available mentors across the network below.'}
+                  </p>
+                  {!recProfileComplete && (
+                    <Link to="/profile" className="btn btn-primary" style={{ marginTop: '0.25rem' }}>
+                      Complete My Profile
+                    </Link>
+                  )}
+                </div>
 
-                  return (
-                    <div key={String(rec._id)} className="rec-card">
-                      {/* Header */}
-                      <div className="rec-card__header">
-                        <div className="rec-card__avatar">{initial}</div>
-                        <div>
-                          <div className="rec-card__name">{rec.user?.name}</div>
-                          <div className="rec-card__role">
-                            {rec.designation} @ {rec.company}
+                {/* Network Discovery when zero personalized matches exist */}
+                {discoveryAlumni.length > 0 && (
+                  <div className="rec-discovery-section">
+                    <div className="rec-discovery-header">
+                      <div className="rec-discovery-title">
+                        <Compass size={18} color="#475569" />
+                        <span>Explore Network Mentors</span>
+                        <span className="rec-discovery-badge">General Discovery</span>
+                      </div>
+                      <span style={{ fontSize: '0.8rem', color: '#64748B' }}>
+                        Browse alumni available for mentorship across diverse industries
+                      </span>
+                    </div>
+
+                    <div className="rec-grid">
+                      {discoveryAlumni.map((rec) => {
+                        const initial = rec.user?.name ? rec.user.name.charAt(0).toUpperCase() : '?';
+                        return (
+                          <div key={String(rec._id)} className="rec-card rec-discovery-card">
+                            <div className="rec-card__header">
+                              <div className="rec-card__avatar" style={{ background: '#64748B' }}>
+                                {initial}
+                              </div>
+                              <div>
+                                <div className="rec-card__name">{rec.user?.name}</div>
+                                <div className="rec-card__role">
+                                  {rec.designation} @ {rec.company}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: '0.8rem', color: '#64748B', marginBottom: '0.4rem', fontWeight: 600 }}>
+                                Expertise &amp; Skills:
+                              </div>
+                              <div>
+                                {rec.skills?.slice(0, 3).map((s, idx) => (
+                                  <span key={idx} className="rec-discovery-tag">
+                                    {s}
+                                  </span>
+                                ))}
+                                {rec.expertise?.slice(0, 2).map((e, idx) => (
+                                  <span key={`exp-${idx}`} className="rec-discovery-tag">
+                                    {e}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="rec-card__footer">
+                              <Link
+                                to="/alumni"
+                                className="rec-card__cta"
+                                style={{ background: '#334155' }}
+                                state={{ highlightAlumniUserId: rec.user?._id }}
+                              >
+                                <Send size={15} />
+                                Connect with {rec.user?.name?.split(' ')[0]}
+                                <ArrowRight size={14} />
+                              </Link>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="rec-grid">
+                  {recommendations.map((rec) => {
+                    const initial = rec.user?.name ? rec.user.name.charAt(0).toUpperCase() : '?';
+                    const scoreClass =
+                      rec.score >= 60 ? 'rec-score-fill--high'
+                      : rec.score >= 30 ? 'rec-score-fill--medium'
+                      : 'rec-score-fill--low';
+
+                    return (
+                      <div key={String(rec._id)} className="rec-card">
+                        {/* Header */}
+                        <div className="rec-card__header">
+                          <div className="rec-card__avatar">{initial}</div>
+                          <div>
+                            <div className="rec-card__name">{rec.user?.name}</div>
+                            <div className="rec-card__role">
+                              {rec.designation} @ {rec.company}
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Match score bar */}
-                      <div className="rec-score-wrap">
-                        <div className="rec-score-header">
-                          <span>Match Score</span>
-                          <span className="rec-score-value">{rec.score}%</span>
+                        {/* Match score bar */}
+                        <div className="rec-score-wrap">
+                          <div className="rec-score-header">
+                            <span>Match Score</span>
+                            <span className="rec-score-value">{rec.score}%</span>
+                          </div>
+                          <div className="rec-score-bar">
+                            <div
+                              className={`rec-score-fill ${scoreClass}`}
+                              style={{ width: `${Math.max(rec.score, 4)}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="rec-score-bar">
-                          <div
-                            className={`rec-score-fill ${scoreClass}`}
-                            style={{ width: `${Math.max(rec.score, 4)}%` }}
-                          />
+
+                        {/* Why this mentor */}
+                        <div className="rec-reasons">
+                          <div className="rec-reasons__label">Why this match?</div>
+                          {rec.reasons && rec.reasons.length > 0 ? (
+                            rec.reasons.map((reason, idx) => (
+                              <div key={idx} className="rec-reason-item">
+                                <span className="rec-reason-dot" />
+                                <span>{reason}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <span className="rec-no-reason">
+                              Add profile details to see personalised reasons.
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Connect button — reuses the Alumni Directory mentorship workflow */}
+                        <div className="rec-card__footer">
+                          <Link
+                            to="/alumni"
+                            className="rec-card__cta"
+                            state={{ highlightAlumniUserId: rec.user?._id }}
+                          >
+                            <Send size={15} />
+                            Connect with {rec.user?.name?.split(' ')[0]}
+                            <ArrowRight size={14} />
+                          </Link>
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
 
-                      {/* Why this mentor */}
-                      <div className="rec-reasons">
-                        <div className="rec-reasons__label">Why this match?</div>
-                        {rec.reasons && rec.reasons.length > 0 ? (
-                          rec.reasons.map((reason, idx) => (
-                            <div key={idx} className="rec-reason-item">
-                              <span className="rec-reason-dot" />
-                              <span>{reason}</span>
-                            </div>
-                          ))
-                        ) : (
-                          <span className="rec-no-reason">
-                            Add profile details to see personalised reasons.
-                          </span>
-                        )}
+                {/* General Discovery section — zero-score mentors labeled as discovery */}
+                {discoveryAlumni.length > 0 && (
+                  <div className="rec-discovery-section">
+                    <div className="rec-discovery-header">
+                      <div className="rec-discovery-title">
+                        <Compass size={18} color="#475569" />
+                        <span>Explore More Alumni</span>
+                        <span className="rec-discovery-badge">General Discovery</span>
                       </div>
-
-                      {/* Connect button — reuses the Alumni Directory mentorship workflow */}
-                      <div className="rec-card__footer">
-                        <Link
-                          to="/alumni"
-                          className="rec-card__cta"
-                          state={{ highlightAlumniUserId: rec.user?._id }}
-                        >
-                          <Send size={15} />
-                          Connect with {rec.user?.name?.split(' ')[0]}
-                          <ArrowRight size={14} />
-                        </Link>
-                      </div>
+                      <span style={{ fontSize: '0.8rem', color: '#64748B' }}>
+                        Mentors available outside your primary match criteria
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
+
+                    <div className="rec-grid">
+                      {discoveryAlumni.map((rec) => {
+                        const initial = rec.user?.name ? rec.user.name.charAt(0).toUpperCase() : '?';
+                        return (
+                          <div key={String(rec._id)} className="rec-card rec-discovery-card">
+                            <div className="rec-card__header">
+                              <div className="rec-card__avatar" style={{ background: '#64748B' }}>
+                                {initial}
+                              </div>
+                              <div>
+                                <div className="rec-card__name">{rec.user?.name}</div>
+                                <div className="rec-card__role">
+                                  {rec.designation} @ {rec.company}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: '0.8rem', color: '#64748B', marginBottom: '0.4rem', fontWeight: 600 }}>
+                                Expertise &amp; Skills:
+                              </div>
+                              <div>
+                                {rec.skills?.slice(0, 3).map((s, idx) => (
+                                  <span key={idx} className="rec-discovery-tag">
+                                    {s}
+                                  </span>
+                                ))}
+                                {rec.expertise?.slice(0, 2).map((e, idx) => (
+                                  <span key={`exp-${idx}`} className="rec-discovery-tag">
+                                    {e}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="rec-card__footer">
+                              <Link
+                                to="/alumni"
+                                className="rec-card__cta"
+                                style={{ background: '#334155' }}
+                                state={{ highlightAlumniUserId: rec.user?._id }}
+                              >
+                                <Send size={15} />
+                                Connect with {rec.user?.name?.split(' ')[0]}
+                                <ArrowRight size={14} />
+                              </Link>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </section>
         )}

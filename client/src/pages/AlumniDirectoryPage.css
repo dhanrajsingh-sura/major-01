@@ -194,6 +194,13 @@
   border-color: #CBD5E1;
 }
 
+.alumni-card--highlighted {
+  border-color: #2563EB !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25), 0 12px 24px -6px rgba(37, 99, 235, 0.15) !important;
+  background: linear-gradient(180deg, #FFFFFF 0%, #EFF6FF 100%) !important;
+  transform: translateY(-2px);
+}
+
 .alumni-card__header {
   display: flex;
   align-items: flex-start;

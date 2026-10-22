@@ -933,3 +933,62 @@
   }
 }
 
+/* General Discovery section (for zero-score / network discovery mentors) */
+.rec-discovery-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed #E2E8F0;
+}
+
+.rec-discovery-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.rec-discovery-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rec-discovery-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #F1F5F9;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  border: 1px solid #CBD5E1;
+}
+
+.rec-discovery-card {
+  border-style: dashed;
+  background: #F8FAFC;
+}
+
+.rec-discovery-card:hover {
+  background: #FFFFFF;
+  border-style: solid;
+}
+
+.rec-discovery-tag {
+  display: inline-block;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  color: #475569;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  margin-right: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+

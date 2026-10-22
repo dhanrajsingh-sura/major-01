@@ -26,34 +26,64 @@ const AlumniProfile = require('../models/AlumniProfile');
  */
 
 /**
- * Normalises a raw string/array value into a lowercased, trimmed string array.
- * Always returns a safe array — never throws, never returns null.
+ * STOP_WORDS — Common English words that add no meaning when tokenising
+ * free-text career goals. Prevents "at" matching "dsa mastery" etc.
+ */
+const STOP_WORDS = new Set([
+  'a','an','the','and','or','in','on','at','to','for','of','with','by',
+  'i','my','me','we','is','are','was','be','as','it','its','this','that',
+  'have','has','will','would','can','could','do','does','from','into',
+  'not','but','if','so','up','out','about','over','more','also','very',
+]);
+
+/**
+ * toTokens — converts a value into an array of clean tokens.
+ *
+ * KEY DESIGN DECISION:
+ *   - Arrays (skills, interests, expertise) are kept as full-phrase items
+ *     (e.g. ["System Architecture"] stays as ["system architecture"]).
+ *     They are NOT split by spaces so that "System Architecture" matches
+ *     the alumni expertise tag "system design" at the phrase level.
+ *   - Strings (careerGoals, branch) are split by comma-or-space into
+ *     individual words, then filtered through STOP_WORDS to remove noise.
  *
  * @param {string|string[]|null|undefined} val
+ * @param {boolean} keepPhrases — if true (for array fields), preserve multi-word phrases
  * @returns {string[]}
  */
-const toTokens = (val) => {
+const toTokens = (val, keepPhrases = false) => {
   if (!val) return [];
   if (Array.isArray(val)) {
+    // Preserve full phrases: ["System Architecture"] → ["system architecture"]
     return val
       .map((s) => (typeof s === 'string' ? s.trim().toLowerCase() : ''))
       .filter(Boolean);
   }
   if (typeof val === 'string') {
-    return val
+    const words = val
       .split(/[,\s]+/)
-      .map((s) => s.trim().toLowerCase())
-      .filter(Boolean);
+      .map((s) => s.trim().toLowerCase().replace(/[^a-z0-9]/g, ''))
+      .filter((s) => s.length > 2 && !STOP_WORDS.has(s));
+    return words;
   }
   return [];
 };
 
 /**
- * Counts how many tokens from `aList` appear anywhere in `bList`.
- * Uses substring containment so "react" matches "reactjs" and vice-versa.
+ * countMatches — counts how many tokens from aList appear anywhere in bList.
  *
- * @param {string[]} aList  Student tokens
- * @param {string[]} bList  Alumni tokens
+ * PHRASE-AWARE:
+ * When comparing phrase-arrays (interests ↔ expertise), we check whether
+ * the full phrase from one side is a substring of any phrase on the other
+ * side, OR vice-versa.  This handles:
+ *   "system architecture" ↔ "system design"  → partial match ("system")
+ *   "cloud computing"     ↔ "cloud infrastructure" → partial match ("cloud")
+ *
+ * When comparing word-tokens (careerGoals), the same substring check applies
+ * but noise words have already been removed by toTokens.
+ *
+ * @param {string[]} aList
+ * @param {string[]} bList
  * @returns {{ matched: string[], count: number }}
  */
 const countMatches = (aList, bList) => {
@@ -62,8 +92,16 @@ const countMatches = (aList, bList) => {
   const matched = [];
   for (const a of aList) {
     for (const b of bList) {
-      // Accept if either token contains the other (handles "React" / "React.js" etc.)
+      // Full phrase containment: either phrase contains the other
       if (a.includes(b) || b.includes(a)) {
+        if (!matched.includes(a)) matched.push(a);
+        break;
+      }
+      // Partial phrase word overlap: split both phrases into words and
+      // look for any shared word of length >= 4 (avoids 'the','of' noise)
+      const aWords = a.split(/\s+/).filter(w => w.length >= 4);
+      const bWords = b.split(/\s+/).filter(w => w.length >= 4);
+      if (aWords.some(aw => bWords.some(bw => aw.includes(bw) || bw.includes(aw)))) {
         if (!matched.includes(a)) matched.push(a);
         break;
       }
@@ -84,13 +122,13 @@ const scoreAlumni = (studentProfile, alumniProfile) => {
   const reasons = [];
 
   // ── Dimension 1: Shared Skills (max 40 pts) ──────────────────────────────
+  // Skills arrays: keep as full phrases (["Node.js"] → ["node.js"])
   const studentSkills = toTokens(studentProfile?.skills);
   const alumniSkills  = toTokens(alumniProfile?.skills);
 
   if (studentSkills.length > 0 && alumniSkills.length > 0) {
     const { matched: skillMatches, count: skillCount } = countMatches(studentSkills, alumniSkills);
     if (skillCount > 0) {
-      // Scale: each matched skill worth 40 / max(studentSkills, 5) pts, capped at 40
       const skillPoints = Math.min(40, Math.round((skillCount / Math.max(studentSkills.length, 1)) * 40));
       score += skillPoints;
       reasons.push(
@@ -100,6 +138,9 @@ const scoreAlumni = (studentProfile, alumniProfile) => {
   }
 
   // ── Dimension 2: Student Interests ↔ Alumni Expertise (max 30 pts) ───────
+  // Both are array fields — phrases are preserved (e.g. "System Architecture").
+  // countMatches does partial-word overlap so "System Architecture" partially
+  // matches "System Design" via the shared word "system".
   const studentInterests = toTokens(studentProfile?.interests);
   const alumniExpertise  = toTokens(alumniProfile?.expertise);
 
@@ -109,16 +150,16 @@ const scoreAlumni = (studentProfile, alumniProfile) => {
       const interestPoints = Math.min(30, Math.round((interestCount / Math.max(studentInterests.length, 1)) * 30));
       score += interestPoints;
       reasons.push(
-        `Interest ↔ Expertise match (${interestPoints} pts): ${interestMatches.slice(0, 3).join(', ')}`
+        `Domain match (${interestPoints} pts): Your interest in ${interestMatches.slice(0, 2).join(', ')} aligns with this mentor's expertise`
       );
     }
   }
 
   // ── Dimension 3: Career Goals ↔ Alumni Expertise (max 20 pts) ────────────
-  // Career goals is a free-text field, so we tokenise the words and match
-  // against alumni expertise tags.
-  const careerGoalTokens = toTokens(studentProfile?.careerGoals);
-  const expertiseTokens  = toTokens(alumniProfile?.expertise);
+  // Career goals is free-text — tokenise into individual words and strip
+  // stop-words so "at", "and", "to" cannot produce spurious matches.
+  const careerGoalTokens = toTokens(studentProfile?.careerGoals);  // stop-word filtered word tokens
+  const expertiseTokens  = toTokens(alumniProfile?.expertise);      // phrase tokens
 
   if (careerGoalTokens.length > 0 && expertiseTokens.length > 0) {
     const { matched: goalMatches, count: goalCount } = countMatches(careerGoalTokens, expertiseTokens);
@@ -126,15 +167,14 @@ const scoreAlumni = (studentProfile, alumniProfile) => {
       const goalPoints = Math.min(20, Math.round((goalCount / Math.max(careerGoalTokens.length, 1)) * 20));
       score += goalPoints;
       reasons.push(
-        `Career goals match (${goalPoints} pts): Goal keywords align with alumni expertise in ${goalMatches.slice(0, 2).join(', ')}`
+        `Career goals match (${goalPoints} pts): Your goals align with expertise in ${goalMatches.slice(0, 2).join(', ')}`
       );
     }
   }
 
   // ── Dimension 4: Academic Branch ↔ Alumni Designation/Company (max 10 pts) ─
-  // Branch relevance: check if the student's branch keyword appears in the
-  // alumni's designation, company, skills, or expertise fields.
-  const branchTokens = toTokens(studentProfile?.branch);
+  // Branch is a string — tokenise into words, strip stop-words.
+  const branchTokens = toTokens(studentProfile?.branch);  // word tokens
   const alumniContextTokens = [
     ...toTokens(alumniProfile?.designation),
     ...toTokens(alumniProfile?.company),
@@ -241,17 +281,24 @@ const getAlumniRecommendations = async (req, res) => {
       })
       .sort((a, b) => b.score - a.score); // highest score first
 
-    // ── 4. Paginate ────────────────────────────────────────────────────────
+    // ── 3a. Split into personalised (score > 0) and discovery (score = 0) ─
+    // Zero-score alumni still exist in the system but share no measurable
+    // overlap with the student's declared profile. We separate them so the
+    // frontend can label them as general discovery, not personalised matches.
+    const personalisedScored = scored.filter(a => a.score > 0);
+    const discoveryScored    = scored.filter(a => a.score === 0);
+
+    // ── 4. Paginate personalised results only ─────────────────────────────
     const limit = Math.min(20, Math.max(1, parseInt(req.query.limit, 10) || 6));
     const page  = Math.max(1, parseInt(req.query.page, 10) || 1);
     const skip  = (page - 1) * limit;
-    const total = scored.length;
+    const total = personalisedScored.length;
 
-    const paginated = scored.slice(skip, skip + limit);
+    const paginated = personalisedScored.slice(skip, skip + limit);
 
     // ── 5. Shape the response — never expose email addresses ──────────────
-    const data = paginated.map(({ user, score, reasons, ...profile }) => ({
-      _id:                    profile._id,
+    const shapeItem = ({ user, score, reasons, ...profile }) => ({
+      _id:                     profile._id,
       score,
       reasons,
       user: {
@@ -260,16 +307,21 @@ const getAlumniRecommendations = async (req, res) => {
         avatar: user.avatar,
         role:   user.role,
       },
-      company:               profile.company,
-      designation:           profile.designation,
-      experience:            profile.experience,
-      skills:                profile.skills,
-      expertise:             profile.expertise,
-      bio:                   profile.bio,
-      location:              profile.location,
-      graduationYear:        profile.graduationYear,
+      company:                profile.company,
+      designation:            profile.designation,
+      experience:             profile.experience,
+      skills:                 profile.skills,
+      expertise:              profile.expertise,
+      bio:                    profile.bio,
+      location:               profile.location,
+      graduationYear:         profile.graduationYear,
       availableForMentorship: profile.availableForMentorship,
-    }));
+    });
+
+    const data          = paginated.map(shapeItem);
+    // Send up to 3 discovery alumni so the frontend can show them in a
+    // separate lower-prominence section without pagination complexity.
+    const discoveryData = discoveryScored.slice(0, 3).map(shapeItem);
 
     return res.status(200).json({
       success: true,
@@ -278,7 +330,9 @@ const getAlumniRecommendations = async (req, res) => {
       currentPage: page,
       totalPages: Math.ceil(total / limit) || 1,
       studentProfileComplete,
+      discoveryCount: discoveryScored.length,
       data,
+      discoveryData,
     });
   } catch (error) {
     console.error('Error computing alumni recommendations:', error);

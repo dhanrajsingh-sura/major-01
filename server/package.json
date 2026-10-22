@@ -7,7 +7,7 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "seed:alumni": "node src/scripts/seedAlumni.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node src/scripts/testPhase6Regression.js"
   },
   "keywords": [],
   "author": "",
