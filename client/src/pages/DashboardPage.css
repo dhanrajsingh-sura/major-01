@@ -663,3 +663,273 @@
   border-radius: 6px;
   border: 1px solid #E2E8F0;
 }
+
+/* ══════════════════════════════════════════════════
+   Phase 5 — Recommended Mentors Section
+   ══════════════════════════════════════════════════ */
+
+.rec-section {
+  margin-bottom: 2.5rem;
+}
+
+.rec-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.rec-section__title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rec-section__subtitle {
+  font-size: 0.85rem;
+  color: #64748B;
+  font-weight: 400;
+  margin-left: 0.25rem;
+}
+
+.rec-section__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: linear-gradient(90deg, #EFF6FF 0%, #ECFEFF 100%);
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* Grid of recommendation cards */
+.rec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Individual recommendation card */
+.rec-card {
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 18px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.rec-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px -6px rgba(29, 78, 216, 0.1);
+  border-color: #BFDBFE;
+}
+
+/* Subtle gradient glow at top-left of card */
+.rec-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle at top left, rgba(29, 78, 216, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Card header: avatar + name + designation */
+.rec-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.rec-card__avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1D4ED8 0%, #06B6D4 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.rec-card__name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.25;
+}
+
+.rec-card__role {
+  font-size: 0.82rem;
+  color: #64748B;
+  margin-top: 0.1rem;
+}
+
+/* Score bar */
+.rec-score-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.rec-score-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+.rec-score-value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #1D4ED8;
+}
+
+.rec-score-bar {
+  width: 100%;
+  height: 8px;
+  background-color: #E2E8F0;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.rec-score-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.5s ease;
+}
+
+/* Colour coding: green ≥ 60, amber ≥ 30, red otherwise */
+.rec-score-fill--high   { background: linear-gradient(90deg, #059669 0%, #10B981 100%); }
+.rec-score-fill--medium { background: linear-gradient(90deg, #D97706 0%, #F59E0B 100%); }
+.rec-score-fill--low    { background: linear-gradient(90deg, #94A3B8 0%, #CBD5E1 100%); }
+
+/* Matching reasons list */
+.rec-reasons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.rec-reasons__label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94A3B8;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.1rem;
+}
+
+.rec-reason-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.825rem;
+  color: #334155;
+  line-height: 1.45;
+}
+
+.rec-reason-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #06B6D4;
+  margin-top: 0.35rem;
+  flex-shrink: 0;
+}
+
+/* No-reasons fallback */
+.rec-no-reason {
+  font-size: 0.8rem;
+  color: #94A3B8;
+  font-style: italic;
+}
+
+/* CTA button at bottom of each card */
+.rec-card__footer {
+  padding-top: 0.85rem;
+  border-top: 1px solid #F1F5F9;
+}
+
+.rec-card__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  border-radius: 10px;
+  background-color: #EFF6FF;
+  color: #1D4ED8;
+  border: 1.5px solid #BFDBFE;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.rec-card__cta:hover {
+  background-color: #1D4ED8;
+  color: #FFFFFF;
+  border-color: #1D4ED8;
+}
+
+/* Incomplete profile notice */
+.rec-incomplete-notice {
+  background: linear-gradient(90deg, #FFFBEB 0%, #FEF9C3 100%);
+  border: 1.5px solid #FDE68A;
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.rec-incomplete-notice__icon {
+  color: #D97706;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.rec-incomplete-notice__text {
+  font-size: 0.9rem;
+  color: #78350F;
+  line-height: 1.5;
+}
+
+.rec-incomplete-notice__link {
+  font-weight: 700;
+  color: #B45309;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .rec-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

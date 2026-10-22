@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth.routes');
 const profileRoutes = require('./routes/profile.routes');
 const mentorshipRoutes = require('./routes/mentorship.routes');
 const notificationRoutes = require('./routes/notification.routes');
+const recommendationRoutes = require('./routes/recommendation.routes');
 
 /**
  * app.js — Configures the Express application.
@@ -44,6 +45,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/mentorship', mentorshipRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/recommendations', recommendationRoutes);
 
 // ──── 404 Handler — catches requests to undefined routes ────
 app.use((req, res) => {

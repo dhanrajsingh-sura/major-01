@@ -23,6 +23,9 @@ import {
   GraduationCap,
   AlertCircle,
   X,
+  Target,
+  Star,
+  Info,
 } from 'lucide-react';
 import AppNavbar from '../components/AppNavbar';
 import { useAuth } from '../context/AuthContext';
@@ -46,6 +49,11 @@ const DashboardPage = () => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(isAlumni ? 'pending' : 'all');
+
+  // Phase 5: Recommendation state (students only)
+  const [recommendations, setRecommendations] = useState([]);
+  const [recLoading, setRecLoading] = useState(false);
+  const [recProfileComplete, setRecProfileComplete] = useState(true);
 
   // Modal states
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
@@ -84,9 +92,27 @@ const DashboardPage = () => {
     }
   }, []);
 
+  // Phase 5: Fetch personalised recommendations for students
+  const loadRecommendations = useCallback(async () => {
+    if (isAlumni) return; // alumni do not use this endpoint
+    try {
+      setRecLoading(true);
+      const res = await api.get('/recommendations/alumni?limit=6');
+      if (res.data.success) {
+        setRecommendations(res.data.data);
+        setRecProfileComplete(res.data.studentProfileComplete !== false);
+      }
+    } catch (err) {
+      console.error('Error loading recommendations:', err);
+    } finally {
+      setRecLoading(false);
+    }
+  }, [isAlumni]);
+
   useEffect(() => {
     loadDashboardData();
-  }, [loadDashboardData]);
+    loadRecommendations();
+  }, [loadDashboardData, loadRecommendations]);
 
   // Handle Accept Request
   const handleAcceptRequest = async (requestId) => {
@@ -394,6 +420,129 @@ const DashboardPage = () => {
           )}
         </div>
 
+        {/* ════════════════════════════════════════════════════
+            Phase 5: Recommended Mentors For You (Students)
+            ════════════════════════════════════════════════════ */}
+        {!isAlumni && (
+          <section className="rec-section">
+            <div className="rec-section__header">
+              <h2 className="rec-section__title">
+                <Target size={20} color="#1D4ED8" />
+                Recommended Mentors For You
+                <span className="rec-section__subtitle">— based on your skills &amp; interests</span>
+              </h2>
+              {recommendations.length > 0 && (
+                <span className="rec-section__badge">
+                  <Sparkles size={13} />
+                  {recommendations.length} Match{recommendations.length !== 1 ? 'es' : ''} Found
+                </span>
+              )}
+            </div>
+
+            {/* Nudge if profile is incomplete */}
+            {!recProfileComplete && (
+              <div className="rec-incomplete-notice">
+                <Info size={18} className="rec-incomplete-notice__icon" />
+                <p className="rec-incomplete-notice__text">
+                  Your profile has no skills, interests, or career goals yet. Recommendations work
+                  best when your profile is complete.{' '}
+                  <Link to="/profile" className="rec-incomplete-notice__link">
+                    Update your profile →
+                  </Link>
+                </p>
+              </div>
+            )}
+
+            {recLoading ? (
+              <div style={{ textAlign: 'center', padding: '2.5rem 1rem' }}>
+                <Loader2 size={30} className="spinner" style={{ color: '#1D4ED8', margin: '0 auto 0.5rem' }} />
+                <p style={{ color: '#64748B', fontSize: '0.9rem' }}>Finding your best mentor matches...</p>
+              </div>
+            ) : recommendations.length === 0 ? (
+              <div className="dashboard-empty">
+                <div className="dashboard-empty__icon"><Users size={22} /></div>
+                <h3 className="dashboard-empty__title">No Recommendations Yet</h3>
+                <p style={{ fontSize: '0.9rem', maxWidth: '440px' }}>
+                  Add your skills, interests, and career goals to your profile so ANVAYA can
+                  suggest the best mentors for you.
+                </p>
+                <Link to="/profile" className="btn btn-primary" style={{ marginTop: '0.25rem' }}>
+                  Complete My Profile
+                </Link>
+              </div>
+            ) : (
+              <div className="rec-grid">
+                {recommendations.map((rec) => {
+                  const initial = rec.user?.name ? rec.user.name.charAt(0).toUpperCase() : '?';
+                  const scoreClass =
+                    rec.score >= 60 ? 'rec-score-fill--high'
+                    : rec.score >= 30 ? 'rec-score-fill--medium'
+                    : 'rec-score-fill--low';
+
+                  return (
+                    <div key={String(rec._id)} className="rec-card">
+                      {/* Header */}
+                      <div className="rec-card__header">
+                        <div className="rec-card__avatar">{initial}</div>
+                        <div>
+                          <div className="rec-card__name">{rec.user?.name}</div>
+                          <div className="rec-card__role">
+                            {rec.designation} @ {rec.company}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Match score bar */}
+                      <div className="rec-score-wrap">
+                        <div className="rec-score-header">
+                          <span>Match Score</span>
+                          <span className="rec-score-value">{rec.score}%</span>
+                        </div>
+                        <div className="rec-score-bar">
+                          <div
+                            className={`rec-score-fill ${scoreClass}`}
+                            style={{ width: `${Math.max(rec.score, 4)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Why this mentor */}
+                      <div className="rec-reasons">
+                        <div className="rec-reasons__label">Why this match?</div>
+                        {rec.reasons && rec.reasons.length > 0 ? (
+                          rec.reasons.map((reason, idx) => (
+                            <div key={idx} className="rec-reason-item">
+                              <span className="rec-reason-dot" />
+                              <span>{reason}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <span className="rec-no-reason">
+                            Add profile details to see personalised reasons.
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Connect button — reuses the Alumni Directory mentorship workflow */}
+                      <div className="rec-card__footer">
+                        <Link
+                          to="/alumni"
+                          className="rec-card__cta"
+                          state={{ highlightAlumniUserId: rec.user?._id }}
+                        >
+                          <Send size={15} />
+                          Connect with {rec.user?.name?.split(' ')[0]}
+                          <ArrowRight size={14} />
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
+
         {/* ── Scheduled Sessions Section ── */}
         {sessions.length > 0 && (
           <section style={{ marginBottom: '2.5rem' }}>
@@ -635,42 +784,28 @@ const DashboardPage = () => {
           <div className="dashboard-viva-panel__header">
             <ShieldCheck size={26} className="dashboard-viva-panel__icon" />
             <h2 className="dashboard-viva-panel__title">
-              Technical Architecture Highlights (Phase 4: Mentorship Engine)
+              Technical Architecture Highlights (Phase 5: Recommendation Engine)
             </h2>
           </div>
           <div className="dashboard-viva-panel__content">
             <p>
-              Phase 4 implements complete relational association and state lifecycle
-              management between students and alumni mentors:
+              Phase 5 adds a transparent, explainable <strong>weighted recommendation algorithm</strong>
+              that scores every alumni mentor against the student&apos;s profile across four dimensions:
             </p>
             <ul style={{ paddingLeft: '1.25rem', marginTop: '0.5rem', lineHeight: '1.7' }}>
-              <li>
-                <strong>State Lifecycle:</strong> Mentorship requests follow a strict state progression: <code>pending &rarr; accepted &rarr; session_scheduled</code>, preventing illegal operations (e.g. scheduling without prior acceptance).
-              </li>
-              <li>
-                <strong>Duplicate Protection:</strong> Database index & controller verification prevent duplicate pending requests between the same student and mentor.
-              </li>
-              <li>
-                <strong>Event-Driven Notifications:</strong> Request submission, acceptance, rejection, and session scheduling synchronously trigger persistent in-app notifications with unread counter badges.
-              </li>
-              <li>
-                <strong>Role Authorization:</strong> Express middleware verifies that only the designated alumni can accept requests and schedule meetings with students.
-              </li>
+              <li><strong>Shared Skills (40 pts):</strong> Points proportional to matched skills ratio, capped at 40.</li>
+              <li><strong>Interest ↔ Expertise Match (30 pts):</strong> Student interests matched against alumni expertise tags.</li>
+              <li><strong>Career Goals ↔ Expertise (20 pts):</strong> Free-text goals tokenised and cross-matched against expertise.</li>
+              <li><strong>Branch Relevance (10 pts):</strong> Academic branch matched to alumni designation, company, or skills.</li>
             </ul>
-
+            <p style={{ marginTop: '0.75rem' }}>
+              <strong>Security:</strong> Protected by <code>protect</code> (JWT verification) + <code>authorize('student')</code> (role guard). Alumni tokens receive HTTP 403 Forbidden.
+            </p>
             <div className="dashboard-viva-panel__badge-row">
-              <span className="tech-tag">
-                <CheckCircle size={14} color="#16A34A" /> Mentorship Association Model
-              </span>
-              <span className="tech-tag">
-                <CheckCircle size={14} color="#16A34A" /> Duplicate Prevention
-              </span>
-              <span className="tech-tag">
-                <CheckCircle size={14} color="#16A34A" /> Meeting Scheduling
-              </span>
-              <span className="tech-tag">
-                <CheckCircle size={14} color="#16A34A" /> Real-time In-App Notifications
-              </span>
+              <span className="tech-tag"><CheckCircle size={14} color="#16A34A" /> Deterministic Weighted Scoring</span>
+              <span className="tech-tag"><CheckCircle size={14} color="#16A34A" /> Student-Only Authorization</span>
+              <span className="tech-tag"><CheckCircle size={14} color="#16A34A" /> Human-Readable Match Reasons</span>
+              <span className="tech-tag"><CheckCircle size={14} color="#16A34A" /> Missing-Field Safe</span>
             </div>
           </div>
         </section>
